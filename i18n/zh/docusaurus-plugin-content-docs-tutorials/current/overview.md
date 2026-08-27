@@ -17,7 +17,7 @@ import LabCardGridAuto from '@site/src/components/labs/LabCardGridAuto';
 
 ## 实验
 
-<LabCardGridAuto />
+<LabCardGridAuto />实验 15 构建固定提交版本的 HAMi，并在 RTX PRO 6000 硬件上验证完整的 Dynamic MIG 生命周期。
 
 每个实验都列出了各自的前提条件。
 

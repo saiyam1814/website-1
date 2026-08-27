@@ -17,7 +17,7 @@ Background knowledge that the labs build on.
 
 ## Labs
 
-<LabCardGridAuto />
+<LabCardGridAuto /> Lab 15 builds a pinned HAMi snapshot and verifies the complete Dynamic MIG lifecycle on RTX PRO 6000 hardware.
 
 Each lab lists its own prerequisites.
 
