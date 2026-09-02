@@ -20,7 +20,7 @@ toc_max_heading_level: 2
 
 This lab builds HAMi from the source snapshot that first contained the merged per-Pod Dynamic MIG implementation, then follows one MIG allocation through creation, saturation, mixed-profile placement, selective reclamation, device-plugin adoption, and spillover to a second GPU. A Pod asks for memory through HAMi's usual resource API; HAMi chooses the smallest allowed NVIDIA MIG profile with enough memory and a legal free placement, then creates and later reclaims that Pod's GPU Instance (GI) and Compute Instance (CI).
 
-The commands and outputs were captured on 2026-08-11 from the [original verified test](https://blog.kubesimplify.com/dynamic-mig-in-kubernetes-with-hami). This tutorial removes the surrounding narrative and retains the reproducible procedure and evidence.
+The commands and outputs were captured on 2026-08-11 from the [original verified test](https://blog.kubesimplify.com/dynamic-mig-in-kubernetes-with-hami), which [Shubham Katara](https://github.com/shkatara) and [Saiyam Pathak](https://github.com/saiyam1814) wrote together on the kubesimplify blog. This tutorial removes the surrounding narrative and retains the reproducible procedure and evidence.
 
 :::caution[Experimental source snapshot]
 
