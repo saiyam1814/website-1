@@ -29,6 +29,9 @@ devicePlugin:
   # per-node Dynamic MIG operating mode below.
   migStrategy: none
 
+  # Steps 3 and 8 of the lab fill in the node name and the excluded GPU index
+  # list below before rendering. The verified run excluded [0, 1, 2, 3, 5, 6, 7],
+  # which registers only GPU 4.
   nodeConfiguration:
     config: |
       {
@@ -44,7 +47,7 @@ devicePlugin:
             "migstrategy": "none",
             "filterdevices": {
               "uuid": [],
-              "index": [0, 1, 2, 3, 5, 6, 7]
+              "index": [__EXCLUDED_GPU_INDICES__]
             },
             "enablegetpreferredallocation": false
           }

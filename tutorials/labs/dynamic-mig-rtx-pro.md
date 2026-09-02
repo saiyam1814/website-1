@@ -73,7 +73,7 @@ You also need:
 - a local checkout of this website repository for the files under [`tutorials/labs/examples/15-dynamic-mig-rtx-pro/`](https://github.com/Project-HAMi/website/tree/master/tutorials/labs/examples/15-dynamic-mig-rtx-pro); and
 - an explicit maintenance window for the **whole GPU node**, not only the GPUs that HAMi will register.
 
-The supplied values target the verified eight-GPU node and initially register only GPU index 4. If your topology differs, choose your own primary and spillover GPU indices in Step 1 and edit the `filterdevices.index` list in the supplied values so that it excludes every index except the primary GPU. You need at least two compatible GPUs to reproduce Step 8.
+The supplied values target the verified eight-GPU node and initially register only GPU index 4. If your topology differs, choose your own primary and spillover GPU indices in Step 1; Steps 3 and 8 derive the `filterdevices.index` exclusion lists from those choices and the node's GPU inventory. You need at least two compatible GPUs to reproduce Step 8.
 
 :::danger[Assign one MIG hardware owner]
 
@@ -99,7 +99,7 @@ export EXAMPLES=tutorials/labs/examples/15-dynamic-mig-rtx-pro
 mkdir -p "$LAB"
 ```
 
-The verified run used GPU 4 and GPU 5. Every later command that touches those GPUs reads these two variables. The supplied `hami-values.yaml` still lists the excluded indices literally; Step 3 shows where to check it.
+The verified run used GPU 4 and GPU 5. Every later command that touches those GPUs reads these two variables, and Steps 3 and 8 derive the `filterdevices.index` exclusion lists from them.
 
 Steps 7 and 8 restart the `hami-device-plugin` DaemonSet. The chart schedules it on every node labeled `gpu=on`, so confirm that `$NODE` is the only such node before continuing:
 
@@ -198,25 +198,29 @@ sudo ctr --namespace k8s.io images list | grep -F "$HAMI_IMAGE"
 
 ## Step 3: Render and Perform the Controlled Install
 
-Create node-specific copies of the supplied values and workload manifest:
+Create node-specific copies of the supplied values and workload manifest. The exclusion list is every GPU index that `nvidia-smi` reports except `$PRIMARY_GPU`, so run this on the GPU node:
 
 ```bash
-sed "s/__NODE_NAME__/${NODE}/g" "$EXAMPLES/hami-values.yaml" \
-  > "$LAB/hami-values-one-gpu.yaml"
+ONE_GPU_EXCLUDES=$(nvidia-smi --query-gpu=index --format=csv,noheader | tr -d ' ' |
+  grep -vx "$PRIMARY_GPU" | paste -sd ',' - | sed 's/,/, /g')
+
+sed -e "s/__NODE_NAME__/${NODE}/g" \
+  -e "s/__EXCLUDED_GPU_INDICES__/${ONE_GPU_EXCLUDES}/" \
+  "$EXAMPLES/hami-values.yaml" > "$LAB/hami-values-one-gpu.yaml"
 sed "s/__NODE_NAME__/${NODE}/g" "$EXAMPLES/mig-small-pack.yaml" \
   > "$LAB/mig-small-pack.yaml"
 
 grep -n '"index"' "$LAB/hami-values-one-gpu.yaml"
 ```
 
-The `grep` output must list every GPU index on the node except `$PRIMARY_GPU`. If you chose a different primary GPU in Step 1, edit the list in `$LAB/hami-values-one-gpu.yaml` before continuing.
+In the verified run the `grep` output showed `[0, 1, 2, 3, 5, 6, 7]`, which registers only GPU 4.
 
 Two similarly named settings have separate responsibilities:
 
 - `devicePlugin.nodeConfiguration.config` sets `operatingmode: "mig"`, activating HAMi Dynamic MIG for this node.
 - Top-level `devicePlugin.migStrategy: none` prevents the NVIDIA device-plugin path from publishing pre-created MIG resources such as `nvidia.com/mig-1g.24gb`. Workloads still request `nvidia.com/gpu`; HAMi creates their MIG instances dynamically.
 
-The `filterdevices.index` field is an **exclusion** list. `[0, 1, 2, 3, 5, 6, 7]` registers only GPU 4. It is not a startup safety boundary; Step 7 demonstrates that the plugin still reconciles filtered GPUs.
+The `filterdevices.index` field is an **exclusion** list; the rendered `[0, 1, 2, 3, 5, 6, 7]` registers only GPU 4. It is not a startup safety boundary; Step 7 demonstrates that the plugin still reconciles filtered GPUs.
 
 Render before changing the cluster:
 
@@ -595,11 +599,15 @@ until ! nvidia-smi -L | grep -q '^  MIG '; do
 done
 ```
 
-Create a second values file that removes `$SECONDARY_GPU` from the exclusion list. In the verified run this changed the list from `[0, 1, 2, 3, 5, 6, 7]` to `[0, 1, 2, 3, 6, 7]`, registering GPUs 4 and 5. The `grep` output must show the shorter list; if it still matches the one-GPU file, `SECONDARY_GPU` was not in the list.
+Render a second values file whose exclusion list omits both `$PRIMARY_GPU` and `$SECONDARY_GPU`. In the verified run this changed the list from `[0, 1, 2, 3, 5, 6, 7]` to `[0, 1, 2, 3, 6, 7]`, registering GPUs 4 and 5.
 
 ```bash
-sed -E "/\"index\":/ { s/(\[|, )${SECONDARY_GPU}, /\1/; s/, ${SECONDARY_GPU}\]/]/; }" \
-  "$LAB/hami-values-one-gpu.yaml" > "$LAB/hami-values-two-gpus.yaml"
+TWO_GPU_EXCLUDES=$(nvidia-smi --query-gpu=index --format=csv,noheader | tr -d ' ' |
+  grep -vx -e "$PRIMARY_GPU" -e "$SECONDARY_GPU" | paste -sd ',' - | sed 's/,/, /g')
+
+sed -e "s/__NODE_NAME__/${NODE}/g" \
+  -e "s/__EXCLUDED_GPU_INDICES__/${TWO_GPU_EXCLUDES}/" \
+  "$EXAMPLES/hami-values.yaml" > "$LAB/hami-values-two-gpus.yaml"
 grep -n '"index"' "$LAB/hami-values-two-gpus.yaml"
 
 helm upgrade hami "$LAB/HAMi/charts/hami" \
