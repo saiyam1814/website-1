@@ -73,7 +73,7 @@ You also need:
 - a local checkout of this website repository for the files under [`tutorials/labs/examples/15-dynamic-mig-rtx-pro/`](https://github.com/Project-HAMi/website/tree/master/tutorials/labs/examples/15-dynamic-mig-rtx-pro); and
 - an explicit maintenance window for the **whole GPU node**, not only the GPUs that HAMi will register.
 
-The supplied values target the verified eight-GPU node and initially register only GPU index 4. Adapt both `filterdevices.index` lists before starting if your topology differs. You need at least two compatible GPUs to reproduce Step 8.
+The supplied values target the verified eight-GPU node and initially register only GPU index 4. If your topology differs, choose your own primary and spillover GPU indices in Step 1 and edit the `filterdevices.index` list in the supplied values so that it excludes every index except the primary GPU. You need at least two compatible GPUs to reproduce Step 8.
 
 :::danger[Assign one MIG hardware owner]
 
@@ -87,14 +87,24 @@ Host-level `nvidia-smi`, Docker, and `ctr` commands run on the GPU node. `kubect
 
 ## Step 1: Back Up and Establish an Idle Handover
 
-Select the single Kubernetes node and set a durable working directory. If your cluster has other nodes, set `NODE` explicitly to the eight-GPU node instead.
+Select the single Kubernetes node, choose the two GPU indices this lab uses, and set a durable working directory. If your cluster has other nodes, set `NODE` explicitly to the eight-GPU node instead.
 
 ```bash
 export NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
+export PRIMARY_GPU=4   # the only GPU registered with HAMi until Step 8
+export SECONDARY_GPU=5 # the spillover GPU added in Step 8
 export LAB=/root/hami-dynamic-mig-rerun-2026-08-11
 export EXAMPLES=tutorials/labs/examples/15-dynamic-mig-rtx-pro
 
 mkdir -p "$LAB"
+```
+
+The verified run used GPU 4 and GPU 5. Every later command that touches those GPUs reads these two variables. The supplied `hami-values.yaml` still lists the excluded indices literally; Step 3 shows where to check it.
+
+Steps 7 and 8 restart the `hami-device-plugin` DaemonSet. The chart schedules it on every node labeled `gpu=on`, so confirm that `$NODE` is the only such node before continuing:
+
+```bash
+kubectl get nodes -l gpu=on -o name
 ```
 
 If a release named `hami` already exists in `hami-system`, save both Helm's stored state and the live objects; they can differ.
@@ -195,7 +205,11 @@ sed "s/__NODE_NAME__/${NODE}/g" "$EXAMPLES/hami-values.yaml" \
   > "$LAB/hami-values-one-gpu.yaml"
 sed "s/__NODE_NAME__/${NODE}/g" "$EXAMPLES/mig-small-pack.yaml" \
   > "$LAB/mig-small-pack.yaml"
+
+grep -n '"index"' "$LAB/hami-values-one-gpu.yaml"
 ```
+
+The `grep` output must list every GPU index on the node except `$PRIMARY_GPU`. If you chose a different primary GPU in Step 1, edit the list in `$LAB/hami-values-one-gpu.yaml` before continuing.
 
 Two similarly named settings have separate responsibilities:
 
@@ -409,7 +423,7 @@ kubectl scale deployment/mig-small-pack \
 
 ## Step 6: Mix Profiles and Reclaim Only One Instance
 
-Remove the packing Pods, derive GPU 4's UUID on this host, and run the supplied script. It creates an 8,000 MiB Pod and a 30,000 MiB Pod with the same CUDA progress loop and pins both to the same physical card.
+Remove the packing Pods, derive the primary GPU's UUID on this host, and run the supplied script. It creates an 8,000 MiB Pod and a 30,000 MiB Pod with the same CUDA progress loop and pins both to the same physical card.
 
 ```bash
 kubectl scale deployment/mig-small-pack \
@@ -417,7 +431,7 @@ kubectl scale deployment/mig-small-pack \
 kubectl wait -n hami-mig-retest \
   --for=delete pod -l app=mig-small-pack --timeout=180s
 
-export GPU_UUID=$(nvidia-smi -i 4 --query-gpu=uuid --format=csv,noheader)
+export GPU_UUID=$(nvidia-smi -i "$PRIMARY_GPU" --query-gpu=uuid --format=csv,noheader)
 "$EXAMPLES/create-mixed-pods.sh"
 ```
 
@@ -516,13 +530,14 @@ On this GPU and driver, recreating the freed placement later produced the same `
 
 This is a disruptive controller test. Keep only the valid, HAMi-managed `mixed-large` allocation active. Every other GPU on the node must remain free of unmanaged work, because plugin startup has node-wide hardware scope at this commit.
 
-Record the allocation's UUID and progress, replace the device-plugin Pod, and wait for the DaemonSet:
+Record the allocation's UUID and progress, replace the device-plugin Pod running on `$NODE`, and wait for the DaemonSet:
 
 ```bash
 LARGE_MIG_UUID=$(kubectl get pod mixed-large -n hami-mig-retest -o json |
   jq -r '.metadata.annotations["hami.io/vgpu-mig-allocations"] | fromjson | .[0].migUUID')
 OLD_DP_POD=$(kubectl get pods -n hami-system \
   -l app.kubernetes.io/component=hami-device-plugin \
+  --field-selector spec.nodeName="$NODE" \
   -o jsonpath='{.items[0].metadata.name}')
 progress_before=$(kubectl exec -n hami-mig-retest mixed-large -- \
   cat /tmp/gpu-progress)
@@ -533,6 +548,7 @@ kubectl rollout status daemonset/hami-device-plugin \
 
 NEW_DP_POD=$(kubectl get pods -n hami-system \
   -l app.kubernetes.io/component=hami-device-plugin \
+  --field-selector spec.nodeName="$NODE" \
   -o jsonpath='{.items[0].metadata.name}')
 kubectl logs "$NEW_DP_POD" -n hami-system --all-containers=true |
   grep 'mig init: resolved startup layout'
@@ -579,11 +595,12 @@ until ! nvidia-smi -L | grep -q '^  MIG '; do
 done
 ```
 
-Create a second values file that removes GPU 5 from the exclusion list. This changes the list from `[0, 1, 2, 3, 5, 6, 7]` to `[0, 1, 2, 3, 6, 7]`, registering GPUs 4 and 5.
+Create a second values file that removes `$SECONDARY_GPU` from the exclusion list. In the verified run this changed the list from `[0, 1, 2, 3, 5, 6, 7]` to `[0, 1, 2, 3, 6, 7]`, registering GPUs 4 and 5. The `grep` output must show the shorter list; if it still matches the one-GPU file, `SECONDARY_GPU` was not in the list.
 
 ```bash
-sed 's/"index": \[0, 1, 2, 3, 5, 6, 7\]/"index": [0, 1, 2, 3, 6, 7]/' \
+sed -E "/\"index\":/ { s/(\[|, )${SECONDARY_GPU}, /\1/; s/, ${SECONDARY_GPU}\]/]/; }" \
   "$LAB/hami-values-one-gpu.yaml" > "$LAB/hami-values-two-gpus.yaml"
+grep -n '"index"' "$LAB/hami-values-two-gpus.yaml"
 
 helm upgrade hami "$LAB/HAMi/charts/hami" \
   -n hami-system \

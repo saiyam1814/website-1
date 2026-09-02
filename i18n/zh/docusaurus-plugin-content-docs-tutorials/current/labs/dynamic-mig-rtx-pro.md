@@ -12,7 +12,7 @@ lab:
     - saiyam1814
   verified: "2026-08-11"
 tags:
-  - GPU 分区
+  - gpu-partitioning
   - nvidia
   - hami
 toc_max_heading_level: 2
