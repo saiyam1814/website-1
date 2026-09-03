@@ -17,7 +17,7 @@ Background knowledge that the labs build on.
 
 ## Labs
 
-<LabCardGridAuto /> Lab 15 builds a pinned HAMi snapshot and verifies the complete Dynamic MIG lifecycle on RTX PRO 6000 hardware.
+<LabCardGridAuto />
 
 Each lab lists its own prerequisites.
 
@@ -30,3 +30,4 @@ Each lab lists its own prerequisites.
 - **Lab 12** deploys KAI Scheduler and HAMi-core on GKE 1.35/COS/CDI and proves the memory ceiling with CUDA allocations.
 - **Lab 13** builds Volcano and the ascend-device-plugin from source on an Ascend 310P3 ARM server and verifies hami-vnpu-core soft slicing, binpack card sharing, and per-container metrics.
 - **Lab 14** installs HAMi v2.10.0 on a four-T4 GKE node and observes the composable `gpu-scheduler-policy` chains (`spread`, `binpack`, `mutex`, `mutex,binpack`) through allocation annotations and scheduler logs.
+- **Lab 17** builds a pinned HAMi snapshot on an eight-GPU RTX PRO 6000 server and verifies the complete Dynamic MIG lifecycle: per-Pod placement, mixed profiles, selective reclamation, device-plugin restart recovery, and spillover to a second GPU.

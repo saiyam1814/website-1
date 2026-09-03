@@ -1,7 +1,7 @@
 ---
-title: "Lab 15: Dynamic MIG Lifecycle on RTX PRO 6000"
+title: "Lab 17: Dynamic MIG Lifecycle on RTX PRO 6000"
 description: "Build a pinned HAMi snapshot and verify per-Pod MIG placement, mixed profiles, selective reclamation, restart recovery, and multi-GPU spillover."
-sidebar_label: "Lab 15: Dynamic MIG Lifecycle"
+sidebar_label: "Lab 17: Dynamic MIG Lifecycle"
 lab:
   level: Advanced
   duration: about 90 minutes
@@ -70,7 +70,7 @@ You also need:
 - root access to the GPU node, working `nvidia-smi`, MIG mode enabled, and no unmanaged CUDA processes;
 - `git`, GNU Make, Docker, `ctr`, Helm, `kubectl`, and `jq`;
 - cluster-admin access and permission to replace the existing HAMi installation;
-- a local checkout of this website repository for the files under [`tutorials/labs/examples/15-dynamic-mig-rtx-pro/`](https://github.com/Project-HAMi/website/tree/master/tutorials/labs/examples/15-dynamic-mig-rtx-pro); and
+- a local checkout of this website repository for the files under [`tutorials/labs/examples/17-dynamic-mig-rtx-pro/`](https://github.com/Project-HAMi/website/tree/master/tutorials/labs/examples/17-dynamic-mig-rtx-pro); and
 - an explicit maintenance window for the **whole GPU node**, not only the GPUs that HAMi will register.
 
 The supplied values target the verified eight-GPU node and initially register only GPU index 4. If your topology differs, choose your own primary and spillover GPU indices in Step 1; Steps 3 and 8 derive the `filterdevices.index` exclusion lists from those choices and the node's GPU inventory. You need at least two compatible GPUs to reproduce Step 8.
@@ -94,7 +94,7 @@ export NODE=$(kubectl get nodes -o jsonpath='{.items[0].metadata.name}')
 export PRIMARY_GPU=4   # the only GPU registered with HAMi until Step 8
 export SECONDARY_GPU=5 # the spillover GPU added in Step 8
 export LAB=/root/hami-dynamic-mig-rerun-2026-08-11
-export EXAMPLES=tutorials/labs/examples/15-dynamic-mig-rtx-pro
+export EXAMPLES=tutorials/labs/examples/17-dynamic-mig-rtx-pro
 
 mkdir -p "$LAB"
 ```
