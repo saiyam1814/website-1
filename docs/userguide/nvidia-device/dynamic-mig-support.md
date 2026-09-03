@@ -175,7 +175,7 @@ curl http://<scheduler-ip>:31993/metrics
 hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb"} 1
 ```
 
-The parent `device_uuid` and `gpu_instance_id` can be correlated with DCGM metrics that carry `UUID` and `GPU_I_ID` labels. The older `nodeGPUMigInstance` metric is emitted only when `legacyMetrics: true`; the Chart default is `false`. See [Cluster device allocation](../monitoring/device-allocation) for the other scheduler allocation metrics.
+The parent `device_uuid` and `gpu_instance_id` can be correlated with DCGM metrics that carry `UUID` and `GPU_I_ID` labels. The older `nodeGPUMigInstance` metric is emitted only when `legacyMetrics: true`; the Chart default is `false`. See [Cluster device allocation](../monitoring/device-allocation.md) for the other scheduler allocation metrics.
 
 ## Migrate from legacy dynamic MIG
 

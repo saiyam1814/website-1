@@ -68,6 +68,12 @@ kubectl describe cm  hami-device-plugin -n kube-system
 
 HAMi 目前有一个 [内置的 MIG 配置](https://github.com/Project-HAMi/HAMi/blob/v2.10.0/charts/hami/templates/scheduler/device-configmap.yaml) 用于 MIG。
 
+:::note v2.10 说明
+
+下方的 `knownMigGeometries` 示例是 v2.9 的配置格式。v2.10 已改为 `migProfileAllowlist`，只声明允许使用的 profile 名称；显存、算力、切片数量和合法 placement 由节点通过 NVML 发现。当前格式见上方链接的 v2.10.0 `device-configmap.yaml`，迁移步骤见[英文页面](/docs/userguide/nvidia-device/dynamic-mig-support#migrate-from-legacy-dynamic-mig)。
+
+:::
+
 你可以按照以下步骤自定义 MIG 配置：
 
 ### 更改 charts/hami/templates/scheduler 中 'device-configmap.yaml'
@@ -172,7 +178,9 @@ spec:
 
 ## 监控 MIG 实例
 
-由 HAMi 管理的 MIG 实例将在调度器监视器中显示（调度器节点 ip:31993/metrics），如下所示：
+v2.10 的当前指标为 `hami_node_gpu_mig_instance_info`，标签包含 profile、placement、MIG UUID、GI ID 和 CI ID，可通过 `device_uuid` 和 `gpu_instance_id` 与 DCGM 指标关联。示例输出见[英文页面](/docs/userguide/nvidia-device/dynamic-mig-support)。
+
+以下旧指标 `nodeGPUMigInstance` 仅在 `legacyMetrics: true` 时输出，Chart 默认值为 `false`。它由调度器监视器（调度器节点 ip:31993/metrics）暴露，如下所示：
 
 ```bash
 # HELP nodeGPUMigInstance GPU 共享模式。0 表示 hami-core，1 表示 mig，2 表示 mps

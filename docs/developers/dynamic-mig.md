@@ -214,7 +214,7 @@ MIG Manager applies node- or GPU-level geometries, while HAMi Dynamic MIG create
 
 GPU Operator may continue to provide the NVIDIA driver, Container Toolkit, DCGM, and other infrastructure. Before HAMi assumes mutation ownership, stop MIG Manager reconciliation and ensure a controller cannot recreate it or reapply `nvidia.com/mig.config`. Deleting one MIG Manager Pod without changing its controller policy does not establish that boundary.
 
-See the [Dynamic MIG user guide](../userguide/nvidia-device/dynamic-mig-support) for the current Chart allowlist, migration checklist, workload example, and validation commands.
+See the [Dynamic MIG user guide](../userguide/nvidia-device/dynamic-mig-support.md) for the current Chart allowlist, migration checklist, workload example, and validation commands.
 
 ## Special thanks
 
