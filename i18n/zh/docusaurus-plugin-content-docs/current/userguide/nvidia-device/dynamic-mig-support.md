@@ -173,7 +173,7 @@ curl http://<scheduler-ip>:31993/metrics
 ```text
 # HELP hami_node_gpu_mig_instance_info Realized MIG instance identity and scheduler placement
 # TYPE hami_node_gpu_mig_instance_info gauge
-hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb"} 1
+hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb",zone="vGPU"} 1
 ```
 
 父 GPU 的 `device_uuid` 和 `gpu_instance_id` 可以与携带 `UUID` 和 `GPU_I_ID` 标签的 DCGM 指标关联。旧指标 `nodeGPUMigInstance` 仅在 `legacyMetrics: true` 时输出，Chart 默认值为 `false`。其他调度器分配指标见[集群设备分配](../monitoring/device-allocation.md)。

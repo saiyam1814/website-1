@@ -176,7 +176,7 @@ The scheduler exports realized instances through the current metric:
 ```text
 # HELP hami_node_gpu_mig_instance_info Realized MIG instance identity and scheduler placement
 # TYPE hami_node_gpu_mig_instance_info gauge
-hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb"} 1
+hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb",zone="vGPU"} 1
 ```
 
 Only reservations enriched with complete runtime identity produce this series. Its labels join the scheduler reservation to the physical GPU, placement, MIG UUID, GI ID, and CI ID. `device_uuid` plus `gpu_instance_id` can also correlate with DCGM series carrying `UUID` and `GPU_I_ID`.

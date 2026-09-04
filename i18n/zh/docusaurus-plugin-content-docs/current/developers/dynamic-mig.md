@@ -177,7 +177,7 @@ device plugin 会定期列出分配到其节点的 Pod。拥有有效预留、�
 ```text
 # HELP hami_node_gpu_mig_instance_info Realized MIG instance identity and scheduler placement
 # TYPE hami_node_gpu_mig_instance_info gauge
-hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb"} 1
+hami_node_gpu_mig_instance_info{compute_instance_id="0",device_index="0",device_uuid="GPU-xxxxxxxx",gpu_instance_id="4",mig_uuid="MIG-xxxxxxxx",node="MIG-NODE-A",placement_size="2",placement_start="2",profile="2g.10gb",zone="vGPU"} 1
 ```
 
 只有补充了完整运行时身份的预留才会产生该序列。其标签将调度器预留与物理 GPU、placement、MIG UUID、GI ID 和 CI ID 关联起来。`device_uuid` 加上 `gpu_instance_id` 还可以与携带 `UUID` 和 `GPU_I_ID` 的 DCGM 序列关联。
